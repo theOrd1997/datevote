@@ -2,18 +2,21 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>날짜 및 시간 투표</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      padding: 2rem;
+      padding: 1rem;
+      margin: 0;
       background: #f4f4f4;
       color: #333;
     }
     .container {
       background: #fff;
-      padding: 2rem;
-      max-width: 800px;
+      padding: 1.5rem;
+      max-width: 100%;
+      width: 800px;
       margin: auto;
       border-radius: 12px;
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
@@ -25,6 +28,7 @@
       margin-bottom: 1rem;
       border-radius: 6px;
       border: 1px solid #ccc;
+      box-sizing: border-box;
     }
     button {
       padding: 0.7rem;
@@ -52,7 +56,7 @@
     }
     .slot-label {
       display: block;
-      margin: 0.2rem 0;
+      margin: 0.3rem 0;
       padding-left: 1rem;
     }
     .slot-names {
@@ -67,11 +71,25 @@
       border: 1px solid #bde0c5;
       border-radius: 8px;
     }
+    @media (max-width: 480px) {
+      body {
+        font-size: 0.95rem;
+      }
+      .day-title {
+        font-size: 1.05rem;
+      }
+      .container {
+        padding: 1rem;
+      }
+      button {
+        font-size: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
 <div class="container">
-  <h2>밥 먹기 가능한 날짜 및 시간을 선택</h2>
+  <h2>가능한 날짜 및 시간을 선택하세요</h2>
   <form id="voteForm">
     <label for="name">이름을 입력하세요:</label>
     <input type="text" id="name" name="name" required placeholder="예: 홍길동">
@@ -79,7 +97,7 @@
     <div id="checkboxContainer"></div>
 
     <button id="submitBtn" type="submit">제출하기</button>
-    <span id="submitStatus"></span>
+    <span id="submitStatus" style="display:block; margin-top: 0.5rem; font-size: 0.9rem; color: #555;"></span>
   </form>
 
   <div class="over-three-block">
@@ -164,7 +182,6 @@
     const slotToNames = result.slotToNames || {};
     const overThree = result.overThree || [];
 
-    // 각 슬롯 위에 이름 표시 및 본인 체크
     Object.keys(slotMap).forEach(slot => {
       const names = slotToNames[slot] || [];
       slotMap[slot].textContent = names.length ? `참여자: ${names.join(", ")}` : "";
@@ -175,7 +192,6 @@
       }
     });
 
-    // 3명 이상 항목 출력
     const list = document.getElementById("overThreeList");
     list.innerHTML = "";
     overThree.forEach(slot => {
