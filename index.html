@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>날짜 및 시간 투표</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f4f4f4; }
+    .container { background: white; padding: 2rem; max-width: 700px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .day-block { margin-bottom: 1rem; }
+    .day-title { font-weight: bold; margin-top: 1rem; }
+    label { display: inline-block; margin: 0.3rem 0.5rem 0 0; }
+    button { margin-top: 1.5rem; width: 100%; padding: 0.7rem; font-size: 1rem; }
+    canvas { margin-top: 2.5rem; }
+    .top-results {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fafafa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h2>만날 수 있는 날짜 및 시간을 선택하세요</h2>
+  <form id="voteForm">
+    <label for="name">이름을 입력하세요:</label>
+    <input type="text" id="name" name="name" required style="margin-bottom: 1rem; width: 100%; padding: 0.5rem;"><br>
+
+    <div id="checkboxContainer"></div>
+    <button type="submit">제출하기</button>
+  </form>
+
+  <canvas id="voteChart" height="400"></canvas>
+
+  <div class="top-results">
+    <h3>📊 상위 10개 선택 결과</h3>
+    <ol id="topList"></ol>
+  </div>
+</div>
+
+<script>
+  const dateList = [
+    "6월 30일 (일)", "7월 1일 (월)", "7월 2일 (화)", "7월 3일 (수)", "7월 4일 (목)",
+    "7월 5일 (금)", "7월 6일 (토)", "7월 7일 (일)", "7월 8일 (월)", "7월 9일 (화)",
+    "7월 10일 (수)", "7월 11일 (목)"
+  ];
+  const timeList = ["오후 4시", "오후 5시", "오후 6시", "오후 7시", "오후 8시", "오후 9시"];
+
+  const container = document.getElementById("checkboxContainer");
+  dateList.forEach(date => {
+    const dayBlock = document.createElement("div");
+    dayBlock.className = "day-block";
+
+    const title = document.createElement("div");
+    title.className = "day-title";
+    title.innerText = date;
+    dayBlock.appendChild(title);
+
+    timeList.forEach(time => {
+      const label = document.createElement("label");
+      const value = `${date} - ${time}`;
+      label.innerHTML = `<input type="checkbox" name="slots" value="${value}"> ${time}`;
+      dayBlock.appendChild(label);
+    });
+
+    container.appendChild(dayBlock);
+  });
+
+  const scriptUrl = 'https://script.google.com/macros/s/AKfycbwWfQoH2tOj1BKka2yu9edbFyUv7ZathfKnSwS6CpTGpwDa-5l0raDgMHLbz4OOnT0l/exec';
+  const ctx = document.getElementById("voteChart").getContext("2d");
+  let chart;
+
+  document.getElementById("voteForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    const selected = [...document.querySelectorAll("input[name='slots']:checked")].map(el => el.value);
+    if (!name) return alert("이름을 입력해주세요.");
+    if (selected.length === 0) return alert("최소 한 항목을 선택해주세요.");
+
+    await fetch(scriptUrl, {
+      method: 'POST',
+      body: JSON.stringify({ name, slots: selected })
+    });
+
+    alert("투표가 완료되었습니다.");
+    updateChart();
+  });
+
+  async function updateChart() {
+    const res = await fetch(scriptUrl);
+    const result = await res.json();
+    const data = result.counts || {};
+    const participantCount = result.participants || 0;
+
+    const labels = [];
+    dateList.forEach(date => {
+      timeList.forEach(time => {
+        labels.push(`${date} - ${time}`);
+      });
+    });
+
+    const counts = labels.map(d => data[d] || 0);
+
+    if (chart) {
+      chart.data.datasets[0].data = counts;
+      chart.update();
+    } else {
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '선택 수',
+            data: counts,
+            backgroundColor: 'rgba(153, 102, 255, 0.5)'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          scales: { x: { beginAtZero: true, stepSize: 1 } }
+        }
+      });
+    }
+
+    // 상위 10개 정렬 및 표시
+    const sorted = labels
+      .map((label, i) => ({ label, count: counts[i] }))
+      .filter(entry => entry.count > 0)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
+
+    const topList = document.getElementById("topList");
+    topList.innerHTML = `<p><strong>총 참여자 수: ${participantCount}명</strong></p>`;
+    sorted.forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = `${entry.label} (${entry.count}명)`;
+      topList.appendChild(li);
+    });
+  }
+
+  updateChart();
+</script>
+</body>
+</html>
