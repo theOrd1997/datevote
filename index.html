@@ -6,16 +6,16 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: sans-serif; padding: 2rem; background: #f4f4f4; }
-    .container { background: white; padding: 2rem; max-width: 700px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .container { background: white; padding: 2rem; max-width: 800px; margin: auto; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
     .day-block { margin-bottom: 1rem; }
     .day-title { font-weight: bold; margin-top: 1rem; }
     label { display: inline-block; margin: 0.3rem 0.5rem 0 0; }
     button { margin-top: 1.5rem; width: 100%; padding: 0.7rem; font-size: 1rem; }
     canvas { margin-top: 2.5rem; }
-    .top-results {
+    .top-results, .user-entries {
       margin-top: 2rem;
       padding: 1rem;
-      background: #fafafa;
+      background: #fdfdfd;
       border: 1px solid #ddd;
       border-radius: 8px;
     }
@@ -37,6 +37,11 @@
   <div class="top-results">
     <h3>📊 상위 10개 선택 결과</h3>
     <ol id="topList"></ol>
+  </div>
+
+  <div class="user-entries">
+    <h3>🙋 참여자별 선택 내역</h3>
+    <ul id="entryList"></ul>
   </div>
 </div>
 
@@ -68,7 +73,7 @@
     container.appendChild(dayBlock);
   });
 
-  const scriptUrl = 'https://script.google.com/macros/s/AKfycbwWfQoH2tOj1BKka2yu9edbFyUv7ZathfKnSwS6CpTGpwDa-5l0raDgMHLbz4OOnT0l/exec';
+  const scriptUrl = '당신의_스크립트_URL'; // 예: https://script.google.com/macros/s/AKfyc.../exec
   const ctx = document.getElementById("voteChart").getContext("2d");
   let chart;
 
@@ -124,7 +129,7 @@
       });
     }
 
-    // 상위 10개 정렬 및 표시
+    // Top 10 표시
     const sorted = labels
       .map((label, i) => ({ label, count: counts[i] }))
       .filter(entry => entry.count > 0)
@@ -137,6 +142,15 @@
       const li = document.createElement("li");
       li.textContent = `${entry.label} (${entry.count}명)`;
       topList.appendChild(li);
+    });
+
+    // 참여자별 선택 내역 표시
+    const entryList = document.getElementById("entryList");
+    entryList.innerHTML = "";
+    (result.entries || []).forEach(entry => {
+      const li = document.createElement("li");
+      li.textContent = `${entry.name}: ${entry.slots}`;
+      entryList.appendChild(li);
     });
   }
 
